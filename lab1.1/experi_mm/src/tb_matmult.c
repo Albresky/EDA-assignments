@@ -5,7 +5,7 @@
 #include "matmult.h"
 
 int main(){
-	short int A[N][N] = { 
+	short A[N][N] = { 
         { 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 }, 
 		{  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9,  9 }, 
 		{  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8 }, 
@@ -24,7 +24,7 @@ int main(){
 		{ 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16 }
     };
     
-    short int B[N][N] = {
+    short B[N][N] = {
         { 2, 4, 6, 8, 10, 11, 22, 33, 44, 55, 66, 1, 3, 5, 7, 9 },
 		{ 2, 4, 6, 8, 10, 11, 22, 33, 44, 55, 66, 1, 3, 5, 7, 9 },
 		{ 2, 4, 6, 8, 10, 11, 22, 33, 44, 55, 66, 1, 3, 5, 7, 9 },
@@ -42,21 +42,40 @@ int main(){
 		{ 2, 4, 6, 8, 10, 11, 22, 33, 44, 55, 66, 1, 3, 5, 7, 9 },
 		{ 2, 4, 6, 8, 10, 11, 22, 33, 44, 55, 66, 1, 3, 5, 7, 9 }
     };
-    int C[N][N];
-	
-	int i,j;
+    short C[N][N];
+	short golden_C[N][N];
+
+	// generate golden data
+	for(short m = 0; m < N; m++)
+	{
+		for(short n = 0; n < N; n++)
+		{
+			golden_C[m][n] = 0;
+			for(short k = 0; k < N; k++)
+			{
+				golden_C[m][n] += A[m][k] * B[k][n];
+			}
+		}
+	}
+
+	short i, j, err = 0;
 	
 	matmult(A, B, C);
 	
 	printf("===========result========\n");
 	printf("C:\n");
-	for (i=0;i<N;i++){
-        for (j=0;j<N;j++){
+	for (i = 0; i < N; i++){
+        for (j = 0; j < N; j++){
             printf("%d\t", C[i][j]);
+			if(C[i][j] != golden_C[i][j])	err++;
         }
         printf("\n");
 	}
 	printf("\n");	
 	
-	return 0;
+	if(err)
+		printf("Test FAILED! Errors: %d\n", err);
+	else
+		printf("Test PASSED!\n");
+	return err;
 }

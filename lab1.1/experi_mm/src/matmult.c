@@ -6,9 +6,9 @@
 
 
 //////////////// Original Code ////////////////
-/* void matmult(short int A[N][N],short int B[N][N],int C[N][N]){
-	int i, j, k;
-    int sum = 0;
+/* void matmult(short A[N][N], short B[N][N], short C[N][N]){
+	short i, j, k;
+    short sum = 0;
     
 	for (i = 0; i < N; i++){
         for(j = 0; j < N; j++){
@@ -22,9 +22,9 @@
 } */
 
 //////////////// [Op1: Use unroll pragma to minimize loop times] ////////////////
-void matmult(short int A[N][N],short int B[N][N],int C[N][N]){
-	int i, j, k;
-    int sum = 0;
+void matmult(short A[N][N], short B[N][N], short C[N][N]){
+	short i, j, k;
+    short sum = 0;
     
 	for (i = 0; i < N; i++){
         for(j = 0; j < N; j++){
