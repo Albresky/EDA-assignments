@@ -3,9 +3,24 @@ Descripttion: The definition of classes for units in floorplan
 Author: Albresky
 Date: 2024-11-27 22:55:28
 LastEditors: Albresky
-LastEditTime: 2024-11-28 11:35:30
+LastEditTime: 2024-11-28 12:15:35
 '''
 
+class Outline:
+    def __init__(self, width:int=0, height:int=0) -> None:
+        self.w = width
+        self.h = height
+
+    def set_height(self, height:int) -> None:
+        self.h = height
+    
+    def set_width(self, width:int) -> None:
+        self.w = width
+        
+    def set_size(self, width:int, height:int) -> None:
+        self.w = width
+        self.h = height
+    
 class Block:
     def __init__(self, name, width, height) -> None:
         self.name = name
@@ -13,6 +28,13 @@ class Block:
         self.height = height
         self.x = 0
         self.y = 0
+        
+        self.rotated = False  # 标记模块是否旋转
+        
+        # B*-树相关指针
+        self.parent = None
+        self.left = None
+        self.right = None
 
 class Terminal:
     def __init__(self, name, x, y) -> None:
@@ -29,6 +51,9 @@ class Net:
     def add_block(self, block) -> None:
         self.nodes.append(block)
         self.degree += 1
+    
+    def get_nodes(self) -> list:
+        return self.nodes
         
 class Units:
     def __init__(self, units:list=[], num_units:int=0) -> None:
