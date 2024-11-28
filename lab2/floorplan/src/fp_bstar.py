@@ -3,13 +3,13 @@ Descripttion: BStarTree impl for units, and simulate annealing method for floorp
 Author: Albresky
 Date: 2024-11-27 22:55:47
 LastEditors: Albresky
-LastEditTime: 2024-11-28 13:12:05
+LastEditTime: 2024-11-28 13:25:08
 '''
 
 from fp_units import Outline, Block, Terminal, Nets, Blocks
 
 class BStarTree:
-    def __init__(self, blocks:Blocks) -> None:
+    def __init__(self, blocks:Blocks, temperature:int=1000, alpha:float=0.95) -> None:
         self.blocks = blocks.get_units()
         self.root = None
         self.best_blocks = None  # 保存最优解

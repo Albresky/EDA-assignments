@@ -24,12 +24,12 @@ def main():
     nets = parse_dotnet(cfg['file']['nets'], blocks, terminals)
 
     # 初始化 B*-树
-    floorplanner = BStarTree(blocks)
+    floorplanner = BStarTree(blocks, temperature=cfg['sa_params']['temperature'], alpha=cfg['sa_params']['alpha'])
     floorplanner.initialize()
     floorplanner.pack()
 
     # 优化
-    floorplanner.simulate_annealing(outline, nets, max_iterations=1)
+    floorplanner.simulate_annealing(outline, nets, max_iterations=cfg['sa_params']['iterations'])
 
     # 计算最终结果
     cost, area, wirelength = floorplanner.calculate_cost(nets)

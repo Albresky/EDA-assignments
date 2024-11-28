@@ -1,6 +1,11 @@
 {
     "file":{
-        "blocks": "../testcases/test.block",
-        "nets": "../testcases/test.nets"
+        "blocks": "../testcases/ami49.block",
+        "nets": "../testcases/ami49.nets"
+    },
+    "sa_params": {
+        "iterations": 10,
+        "alpha": 0.95,
+        "temperature": 1000
     }
 }
