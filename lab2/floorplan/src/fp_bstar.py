@@ -3,7 +3,7 @@ Descripttion: BStarTree impl for units, and simulate annealing method for floorp
 Author: Albresky
 Date: 2024-11-27 22:55:47
 LastEditors: Albresky
-LastEditTime: 2024-11-28 13:25:08
+LastEditTime: 2024-11-28 13:53:05
 '''
 
 from fp_units import Outline, Block, Terminal, Nets, Blocks
@@ -45,25 +45,34 @@ class BStarTree:
             else:
                 self.insert(parent.right, block)
 
+
+    '''
+    Description: Due to Python DOES NOT support tail recursion, 
+                 we use iterations with stack to avoid recursion boom 
+                 (Stack Overflow! LOL ;-D) )
+    '''   
     def pack(self):
-        # 通过前序遍历计算每个模块的位置
-        def traverse(node):
-            if node.parent is None:
-                node.x = 0
-                node.y = 0
-            else:
-                if node == node.parent.left:
-                    node.x = node.parent.x + node.parent.width
-                    node.y = node.parent.y
+        def traverse_iter(node):
+            stack = [(node, None, True)]  # Stack to hold nodes, their parents, and whether they are left children
+            while stack:
+                current, parent, is_left_child = stack.pop()
+                if parent is None:
+                    current.x = 0
+                    current.y = 0
                 else:
-                    node.x = node.parent.x
-                    node.y = node.parent.y + node.parent.height
-            if node.left:
-                traverse(node.left)
-            if node.right:
-                traverse(node.right)
+                    if is_left_child:
+                        current.x = parent.x + parent.width
+                        current.y = parent.y
+                    else:
+                        current.x = parent.x
+                        current.y = parent.y + parent.height
+                if current.right:
+                    stack.append((current.right, current, False))
+                if current.left:
+                    stack.append((current.left, current, True))
+
         if self.root:
-            traverse(self.root)
+            traverse_iter(self.root)
 
     def perturb(self):
         # 执行扰动操作，如交换模块、旋转等
