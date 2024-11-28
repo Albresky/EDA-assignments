@@ -3,7 +3,7 @@ Descripttion: BStarTree impl for units, and simulate annealing method for floorp
 Author: Albresky
 Date: 2024-11-27 22:55:47
 LastEditors: Albresky
-LastEditTime: 2024-11-28 14:31:15
+LastEditTime: 2024-11-28 15:01:07
 '''
 
 import math, random
@@ -49,9 +49,10 @@ class BStarTree:
                  we use iterations with stack to avoid recursion boom 
                  (Stack Overflow! LOL ;-D) )
     '''   
-    def pack(self) -> None:
-        def traverse_iter(node) -> None:
-            stack = [(node, None, True)]  # Stack to hold nodes, their parents, and whether they are left children
+    def pack(self):
+        # 通过前序遍历计算每个模块的位置
+        def traverse_iter(node):
+            stack = [(node, None, True)]  # Stack to hold nodes, their  parents, and whether they are left children
             while stack:
                 current, parent, is_left_child = stack.pop()
                 if parent is None:
@@ -64,6 +65,12 @@ class BStarTree:
                     else:
                         current.x = parent.x
                         current.y = parent.y + parent.height
+
+                # 检查是否与其他 blocks 重叠
+                if self.check_overlap(current):
+                    # 如果重叠，调整位置
+                    self.adjust_position(current)
+
                 if current.right:
                     stack.append((current.right, current, False))
                 if current.left:
@@ -71,6 +78,53 @@ class BStarTree:
 
         if self.root:
             traverse_iter(self.root)
+
+    def check_overlap(self, block) -> bool:
+        for other in self.blocks:
+            if other != block:
+                if not (block.x + block.width <= other.x or block.x >= other.x  + other.width or
+                        block.y + block.height <= other.y or block.y >= other.  y + other.height):
+                    return True
+        return False
+
+    def adjust_position(self, block):
+        # 获取所有可能的非重叠位置
+        possible_positions = self.get_possible_positions(block)
+
+        # 选择最优位置
+        best_position = None
+        min_cost = float('inf')
+        for pos in possible_positions:
+            original_x, original_y = block.x, block.y
+            block.x, block.y = pos
+            if not self.check_overlap(block):
+                cost = self.calculate_cost_for_block(block)
+                if cost < min_cost:
+                    min_cost = cost
+                    best_position = pos
+            block.x, block.y = original_x, original_y
+
+        # 设置最优位置
+        if best_position:
+            block.x, block.y = best_position
+
+    def get_possible_positions(self, block):
+        positions = []
+        for other in self.blocks:
+            if other != block:
+                # 右侧
+                positions.append((other.x + other.width, other.y))
+                # 下侧
+                positions.append((other.x, other.y + other.height))
+        return positions
+
+    def calculate_cost_for_block(self, block):
+        # 计算单个 block 的成本
+        cost = 0
+        for other in self.blocks:
+            if other != block:
+                cost += abs(block.x - other.x) + abs(block.y - other.y)
+        return cost
 
     def perturb(self) -> None:
         # 执行扰动操作，如交换模块、旋转等
@@ -148,15 +202,22 @@ class BStarTree:
             self.detach_node(src)
             self.attach_node(original_parent, src)
 
-    def simulate_annealing(self, outline:Outline, nets:Nets, max_iterations:int=1000) -> None:
+    '''
+    Description: The Simulate Annealing function to find optimal floorplan.
+    '''
+    def simulate_annealing(self, outline:Outline, nets:Nets,    max_iterations:int=1000) -> None:
         best_cost, _, _, _ = self.calculate_cost(nets)
         self.best_blocks = [block for block in self.blocks]
-
+    
         for i in range(max_iterations):
             self.perturb()
             self.pack()
             # 检查是否超出芯片范围
-            if not self.check_out_of_outline(outline):
+            if self.check_out_of_outline(outline):
+                self.revert()
+                continue
+            # 检查是否有重叠
+            if any(self.check_overlap(block) for block in self.blocks):
                 self.revert()
                 continue
             cost, _, _, _ = self.calculate_cost(nets)
@@ -168,6 +229,8 @@ class BStarTree:
             else:
                 self.revert()
             self.T *= self.alpha  # 降温
+            
+            print(f'Iteration: {i}, Cost: {cost}, Best Cost: {best_cost}, T: {self.T}', flush=True)
 
     '''
     Description: Calculate the number of adjacent long edges,
@@ -218,4 +281,4 @@ class BStarTree:
     def check_out_of_outline(self, outline:Outline) -> bool:
         max_x = max(block.x + block.width for block in self.blocks)
         max_y = max(block.y + block.height for block in self.blocks)
-        return max_x <= outline.w and max_y <= outline.h
+        return max_x > outline.w or max_y > outline.h
