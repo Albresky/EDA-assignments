@@ -3,16 +3,16 @@ Descripttion: Parsers for units from .block and .net files
 Author: Albresky
 Date: 2024-11-27 22:55:07
 LastEditors: Albresky
-LastEditTime: 2024-11-28 11:40:18
+LastEditTime: 2024-11-28 12:16:02
 '''
 
-from units import Block, Terminal, Net, Nets, Blocks, Terminals
+from fp_units import *
 
 
-def parse_dotblock(filename):
+def parse_dotblock(filename) -> tuple:
     blocks = Blocks()
     terminals = Terminals()
-    outline = None
+    outline = Outline()
     with open(filename, 'r') as f:
         lines = f.readlines()
     index = 0
@@ -26,7 +26,7 @@ def parse_dotblock(filename):
             continue
         if line.startswith('Outline:'):
             _, width, height = line.split()
-            outline = (int(width), int(height))
+            outline.set_size(int(width), int(height))
         elif line.startswith('NumBlocks:'):
             _, num_blocks_str = line.split()
             num_blocks = int(num_blocks_str)
@@ -62,7 +62,7 @@ def parse_dotblock(filename):
         index += 1
     return outline, blocks, terminals
 
-def parse_dotnet(filename:str, blocks:Blocks, terminals:Terminals):
+def parse_dotnet(filename:str, blocks:Blocks, terminals:Terminals) -> Nets:
     nets = Nets()
     block_dict = {block.name: block for block in blocks.get_units()}
     terminal_dict = {terminal.name: terminal for terminal in terminals.get_units()}
