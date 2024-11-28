@@ -3,7 +3,7 @@ Descripttion: BStarTree impl for units, and simulate annealing method for floorp
 Author: Albresky
 Date: 2024-11-27 22:55:47
 LastEditors: Albresky
-LastEditTime: 2024-11-28 14:22:42
+LastEditTime: 2024-11-28 14:31:15
 '''
 
 import math, random
@@ -149,7 +149,7 @@ class BStarTree:
             self.attach_node(original_parent, src)
 
     def simulate_annealing(self, outline:Outline, nets:Nets, max_iterations:int=1000) -> None:
-        best_cost, _, _ = self.calculate_cost(nets)
+        best_cost, _, _, _ = self.calculate_cost(nets)
         self.best_blocks = [block for block in self.blocks]
 
         for i in range(max_iterations):
@@ -159,7 +159,7 @@ class BStarTree:
             if not self.check_out_of_outline(outline):
                 self.revert()
                 continue
-            cost, _, _ = self.calculate_cost(nets)
+            cost, _, _, _ = self.calculate_cost(nets)
             delta = cost - best_cost
             if delta < 0 or random.random() < math.exp(-delta / self.T):
                 if cost < best_cost:
@@ -169,7 +169,24 @@ class BStarTree:
                 self.revert()
             self.T *= self.alpha  # 降温
 
-    def calculate_cost(self, nets:Nets, alpha=0.5) -> tuple:
+    '''
+    Description: Calculate the number of adjacent long edges,
+                 add this as benifit to the cost function
+    '''
+    def calculate_adjacent_long_edges(self, nets) -> None:
+        adjacent_long_edges = 0
+        for net in nets.get_units():
+            for i in range(len(net.get_nodes()) - 1):
+                for j in range(i + 1, len(net.get_nodes())):
+                    node1 = net.get_nodes()[i]
+                    node2 = net.get_nodes()[j]
+                    if isinstance(node1, Block) and isinstance(node2, Block):
+                        if (node1.x == node2.x and abs(node1.y - node2.y) == max(node1.height, node2.height)) or \
+                           (node1.y == node2.y and abs(node1.x - node2.x) == max(node1.width, node2.width)):
+                            adjacent_long_edges += 1
+        return adjacent_long_edges
+
+    def calculate_cost(self, nets:Nets, alpha=0.5, beta=0.5) -> tuple:
         # 计算面积和线长
         _blocks = self.blocks
         min_x = min(block.x for block in _blocks)
@@ -191,9 +208,12 @@ class BStarTree:
                     ys.append(node.y)
             wirelength += (max(xs) - min(xs)) + (max(ys) - min(ys))
 
+        # 计算相邻长边的奖励
+        adjacent_long_edges = self.calculate_adjacent_long_edges(nets)
+
         # 计算成本函数
-        cost = alpha * area + (1 - alpha) * wirelength
-        return cost, area, wirelength
+        cost = alpha * area + (1 - alpha) * wirelength - beta * adjacent_long_edges
+        return cost, area, wirelength, adjacent_long_edges
 
     def check_out_of_outline(self, outline:Outline) -> bool:
         max_x = max(block.x + block.width for block in self.blocks)

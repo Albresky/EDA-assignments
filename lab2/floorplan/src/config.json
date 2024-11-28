@@ -4,7 +4,7 @@
         "nets": "../testcases/ami49.nets"
     },
     "sa_params": {
-        "iterations": 20,
+        "iterations": 10,
         "alpha": 0.95,
         "temperature": 1000
     }

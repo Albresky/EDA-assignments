@@ -3,7 +3,7 @@ Descripttion: The main function of floorplan
 Author: Albresky
 Date: 2024-11-28 12:03:13
 LastEditors: Albresky
-LastEditTime: 2024-11-28 13:08:00
+LastEditTime: 2024-11-28 14:27:47
 '''
 import os,sys
 
@@ -32,7 +32,7 @@ def main():
     floorplanner.simulate_annealing(outline, nets, max_iterations=cfg['sa_params']['iterations'])
 
     # 计算最终结果
-    cost, area, wirelength = floorplanner.calculate_cost(nets)
+    cost, area, wirelength, adjacent_long_edges = floorplanner.calculate_cost(nets)
     end_time = time.time()
 
     # 输出结果
