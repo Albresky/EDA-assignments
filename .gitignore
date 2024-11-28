@@ -1,5 +1,7 @@
 # dir
 prj
+.vscode
+__pycache__
 
 # files
 *.log
