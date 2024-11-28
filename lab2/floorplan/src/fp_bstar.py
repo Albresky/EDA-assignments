@@ -3,9 +3,10 @@ Descripttion: BStarTree impl for units, and simulate annealing method for floorp
 Author: Albresky
 Date: 2024-11-27 22:55:47
 LastEditors: Albresky
-LastEditTime: 2024-11-28 13:53:05
+LastEditTime: 2024-11-28 14:22:42
 '''
 
+import math, random
 from fp_units import Outline, Block, Terminal, Nets, Blocks
 
 class BStarTree:
@@ -22,15 +23,12 @@ class BStarTree:
 
     def initialize(self) -> None:
         # 初始化 B*-树，随机排列模块
-        import random
         random.shuffle(self.blocks)
         self.root = self.blocks[0]
         for block in self.blocks[1:]:
             self.insert(self.root, block)
 
-    def insert(self, parent, block):
-        import random
-        
+    def insert(self, parent, block) -> None:
         # 随机插入左子节点或右子节点
         if random.choice([True, False]):
             if parent.left is None:
@@ -51,8 +49,8 @@ class BStarTree:
                  we use iterations with stack to avoid recursion boom 
                  (Stack Overflow! LOL ;-D) )
     '''   
-    def pack(self):
-        def traverse_iter(node):
+    def pack(self) -> None:
+        def traverse_iter(node) -> None:
             stack = [(node, None, True)]  # Stack to hold nodes, their parents, and whether they are left children
             while stack:
                 current, parent, is_left_child = stack.pop()
@@ -74,9 +72,8 @@ class BStarTree:
         if self.root:
             traverse_iter(self.root)
 
-    def perturb(self):
+    def perturb(self) -> None:
         # 执行扰动操作，如交换模块、旋转等
-        import random
         action = random.choice(['swap', 'rotate', 'move'])
         if action == 'swap':
             self.swap_blocks()
@@ -85,35 +82,33 @@ class BStarTree:
         elif action == 'move':
             self.move_subtree()
 
-    def swap_blocks(self):
-        import random
+    def swap_blocks(self) -> None:
         b1, b2 = random.sample(self.blocks, 2)
+        
         # 交换模块在树中的位置
         self.exchange_nodes(b1, b2)
         self.operations.append(('swap', b1, b2))
 
-    def rotate_block(self):
-        import random
+    def rotate_block(self) -> None:
         block = random.choice(self.blocks)
         block.width, block.height = block.height, block.width
         block.rotated = not block.rotated
         self.operations.append(('rotate', block))
 
-    def move_subtree(self):
-        import random
+    def move_subtree(self) -> None:
         src, dst = random.sample(self.blocks, 2)
         original_parent = src.parent  # Store the original parent
         self.detach_node(src)
         self.attach_node(dst, src)
         self.operations.append(('move', src, dst, original_parent))
 
-    def exchange_nodes(self, b1, b2):
+    def exchange_nodes(self, b1, b2) -> None:
         # 交换两个节点的位置
         b1.parent, b2.parent = b2.parent, b1.parent
         b1.left, b2.left = b2.left, b1.left
         b1.right, b2.right = b2.right, b1.right
 
-    def detach_node(self, node):
+    def detach_node(self, node) -> None:
         # 从树中删除节点
         parent = node.parent
         if parent:
@@ -123,7 +118,7 @@ class BStarTree:
                 parent.right = None
         node.parent = None
 
-    def attach_node(self, parent, node):
+    def attach_node(self, parent, node) -> None:
         if parent is None:
             # If parent is None, set node as the new root
             self.root = node
@@ -138,7 +133,7 @@ class BStarTree:
             else:
                 self.attach_node(parent.left, node)
 
-    def revert(self):
+    def revert(self) -> None:
         if not self.operations:
             return
         action = self.operations.pop()
@@ -153,14 +148,9 @@ class BStarTree:
             self.detach_node(src)
             self.attach_node(original_parent, src)
 
-    def simulate_annealing(self, outline:Outline, nets:Nets, max_iterations:int=1000):
-        import math
-        import random
-        
+    def simulate_annealing(self, outline:Outline, nets:Nets, max_iterations:int=1000) -> None:
         best_cost, _, _ = self.calculate_cost(nets)
         self.best_blocks = [block for block in self.blocks]
-
-        # self.print_tree()
 
         for i in range(max_iterations):
             self.perturb()
