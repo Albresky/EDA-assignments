@@ -3,7 +3,7 @@ Descripttion: Utils like configurations and visualization
 Author: Albresky
 Date: 2024-11-27 22:56:01
 LastEditors: Albresky
-LastEditTime: 2024-11-28 13:13:36
+LastEditTime: 2024-11-28 13:18:54
 '''
 
 def load_config(filename:str) -> dict:
@@ -25,24 +25,28 @@ def visualize(filename:str) -> None:
     width = []
     height = []
 
+    colors = []
+    
+    def sel_color(colors) -> str:
+        import random
+        color = '#'
+        for i in range(6):
+            color += random.choice('0123456789ABCDEF')
+        if color not in colors:
+            colors.append(color)
+            return color
+        else:
+            return sel_color(colors)
+    
 
     with open(filename) as f:
-        cost = float(f.readline().split(' ')[-1])
-        hpwl = float(f.readline().split(' ')[-1])
-        area = int(f.readline().split(' ')[-1])
+        next(f)
+        next(f)
+        next(f)
         xlength = int(f.readline().split(' ')[-1])
         ylength = int(f.readline().split(' ')[-1])
-        runtime = float(f.readline().split(' ')[-1])
-        
-        print('#'*10 + ' Floorplan Information ' + '#'*10)
-        print(f'Cost: {cost}')
-        print(f'HPWL: {hpwl}')
-        print(f'Area: {area}')
-        print(f'X-Length: {xlength}')
-        print(f'Y-Length: {ylength}')
-        print(f'Runtime: {runtime} seconds')
-        print('#'*(20+len(' Floorplan Information ')))
-
+        next(f)
+    
         for line in f.readlines():
             s = line.split(' ')
             x_cor.append(float(s[1]))
@@ -54,8 +58,8 @@ def visualize(filename:str) -> None:
     for i,j,k,l in zip(x_cor, y_cor, width, height):
         rect1 = matplotlib.patches.Rectangle((i, j), 
                                          k, l,   
-                                         color ='red',
-                                         fill=False)
+                                         facecolor = sel_color(colors),
+                                         fill=True)
         ax.add_patch(rect1)
 
 
