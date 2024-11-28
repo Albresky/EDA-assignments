@@ -1,0 +1,6 @@
+{
+    "file":{
+        "blocks": "../testcases/test.block",
+        "nets": "../testcases/test.nets"
+    }
+}
