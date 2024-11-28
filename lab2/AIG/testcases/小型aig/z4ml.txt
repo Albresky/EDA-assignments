@@ -1,0 +1,5 @@
+pis=7, pos=4, area=217, depth=9, NOT=70
+
+optimize
+
+pis=7, pos=4, area=217, depth=9, NOT=70
