@@ -3,7 +3,7 @@ Descripttion: Utils like configurations and visualization
 Author: Albresky
 Date: 2024-11-27 22:56:01
 LastEditors: Albresky
-LastEditTime: 2024-11-28 13:18:54
+LastEditTime: 2024-12-04 14:17:48
 '''
 
 def load_config(filename:str) -> dict:
@@ -18,8 +18,12 @@ def visualize(filename:str) -> None:
     import matplotlib.pyplot as plt 
     
     fig = plt.figure() 
-    ax = fig.add_subplot(111)
+    # set canvas size to high resolution
+    fig.set_size_inches(15, 15)
 
+    ax = fig.add_subplot(111)
+    
+    node_names = []
     x_cor = []
     y_cor = []
     width = []
@@ -46,20 +50,27 @@ def visualize(filename:str) -> None:
         xlength = int(f.readline().split(' ')[-1])
         ylength = int(f.readline().split(' ')[-1])
         next(f)
-    
+
         for line in f.readlines():
             s = line.split(' ')
+            node_names.append(str(s[0]))
             x_cor.append(float(s[1]))
             y_cor.append(float(s[2]))
             width.append(float(s[3])-float(s[1]))
             height.append(float(s[4])-float(s[2]))
 
 
-    for i,j,k,l in zip(x_cor, y_cor, width, height):
-        rect1 = matplotlib.patches.Rectangle((i, j), 
-                                         k, l,   
+    for x,y,w,h,n in zip(x_cor, y_cor, width, height, node_names):
+        rect1 = matplotlib.patches.Rectangle((x, y), 
+                                         w, h,   
                                          facecolor = sel_color(colors),
                                          fill=True)
+
+        if w>h:
+            ax.text(x+w/2, y+h/2, n, ha='center', va='center', fontsize=10, color='white', fontweight='bold')
+        else:
+            ax.text(x+w/2, y+h/2, n, ha='center', va='center', fontsize=10, color='white', fontweight='bold', rotation=90)
+
         ax.add_patch(rect1)
 
 
@@ -67,7 +78,7 @@ def visualize(filename:str) -> None:
     border=max(xlength,ylength)  
     plt.xlim([0, border+200]) 
     plt.ylim([0, border+200]) 
-    
+
     plt.show()
     plt.savefig(f'{filename}.png')
     pass
