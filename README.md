@@ -1,3 +1,10 @@
+<!--
+ * @Descripttion: Edit your description
+ * @Author: Albresky
+ * @Date: 2024-11-28 13:56:02
+ * @LastEditors: Albresky
+ * @LastEditTime: 2024-12-13 16:38:17
+-->
 # BUPT 数字 EDA 理论基础 | Lab 实验
 
 # Intro
@@ -9,7 +16,7 @@
     - Block-level parallelism in MM with `dataflow` HLS pragma
 
  - Lab2.2: Floorplan Algorithm
-    - *BStar Tree* based
+    - ~~*BStar Tree* based~~
     - *Simulated Annealing* optimization
     - Tools implemented:
         - parser
@@ -30,14 +37,14 @@
   </tr>
   <tr>
     <td>
-    <img src="images/lab1.2_floorplan_results1_visualized.png" height="200">
+    <img src="images/lab1.2_floorplan_results1_visualized.png" height="400">
     </td>
     <td>
-    <img src="images/lab1.2_floorplan_results2_visualized.png" height="200">
+    <img src="images/lab1.2_floorplan_results2_visualized.png" height="400">
     </td>
 </tr>
 </table>
 
 # About
 
-第一次写 Floorplan，轻喷，LOL :joy: ...
+第一次写 Floorplan，轻喷，LOL...
