@@ -3,12 +3,14 @@ Descripttion: The main function of floorplan
 Author: Albresky
 Date: 2024-11-28 12:03:13
 LastEditors: Albresky
-LastEditTime: 2024-11-28 14:27:47
+LastEditTime: 2024-12-13 16:14:11
 '''
 import os,sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '.'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.abspath(__file__))
+os.chdir(sys.path[0])
 
 import time, datetime
 from fp_parser import parse_dotnet, parse_dotblock
@@ -24,19 +26,22 @@ def main():
     nets = parse_dotnet(cfg['file']['nets'], blocks, terminals)
 
     # 初始化 B*-树
-    floorplanner = BStarTree(blocks, temperature=cfg['sa_params']['temperature'], alpha=cfg['sa_params']['alpha'])
+    floorplanner = BStarTree(outline, blocks, temperature=cfg['sa_params']['temperature'], alpha=cfg['sa_params']['alpha'])
     floorplanner.initialize()
-    floorplanner.pack()
+    # floorplanner.pack()
 
     # 优化
-    floorplanner.simulate_annealing(outline, nets, max_iterations=cfg['sa_params']['iterations'])
+    floorplanner.simulate_annealing(nets, max_iterations=cfg['sa_params']['iterations'])
 
     # 计算最终结果
     cost, area, wirelength, adjacent_long_edges = floorplanner.calculate_cost(nets)
     end_time = time.time()
+    
+    print(f"=============== Fininsh ==================")
+    floorplanner.check_valid_all()
 
     # 输出结果
-    output_name = f'floorplan_{datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S")}.output'
+    output_name = f'output/floorplan_{datetime.datetime.now().strftime("%Y-%m-%d-%H:%M:%S")}.output'
     with open(output_name, 'w') as f:
         f.write(f"Cost {cost}\n")
         f.write(f"Wirelength {wirelength}\n")

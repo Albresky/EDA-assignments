@@ -3,7 +3,7 @@ Descripttion: Utils like configurations and visualization
 Author: Albresky
 Date: 2024-11-27 22:56:01
 LastEditors: Albresky
-LastEditTime: 2024-12-04 14:17:48
+LastEditTime: 2024-12-13 14:49:39
 '''
 
 def load_config(filename:str) -> dict:
@@ -18,8 +18,6 @@ def visualize(filename:str) -> None:
     import matplotlib.pyplot as plt 
     
     fig = plt.figure() 
-    # set canvas size to high resolution
-    fig.set_size_inches(15, 15)
 
     ax = fig.add_subplot(111)
     
@@ -73,11 +71,18 @@ def visualize(filename:str) -> None:
 
         ax.add_patch(rect1)
 
-
+    # set canvas size to high resolution
+    scale = 15
+    fig.set_size_inches(scale, 1.0*scale*ylength/xlength)
     ax.set_aspect('equal', adjustable='box')
-    border=max(xlength,ylength)  
-    plt.xlim([0, border+200]) 
-    plt.ylim([0, border+200]) 
+    
+    for i in range(0, ylength, 100):
+        plt.plot([0, xlength], [i, i], 'k--', lw=0.5)
+    for i in range(0, xlength, 100):
+        plt.plot([i, i], [0, ylength], 'k--', lw=0.5)
+    limlen = max(xlength, ylength)
+    plt.xlim([0, limlen+300]) 
+    plt.ylim([0, limlen+300]) 
 
     plt.show()
     plt.savefig(f'{filename}.png')

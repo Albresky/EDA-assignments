@@ -3,7 +3,7 @@ Descripttion: The definition of classes for units in floorplan
 Author: Albresky
 Date: 2024-11-27 22:55:28
 LastEditors: Albresky
-LastEditTime: 2024-11-28 12:15:35
+LastEditTime: 2024-12-13 14:55:00
 '''
 
 class Outline:
@@ -22,19 +22,33 @@ class Outline:
         self.h = height
     
 class Block:
-    def __init__(self, name, width, height) -> None:
+    def __init__(self, name=None, width=None, height=None, x=0, y=0) -> None:
         self.name = name
         self.width = width
         self.height = height
-        self.x = 0
-        self.y = 0
+        self.x = x
+        self.y = y
         
-        self.rotated = False  # 标记模块是否旋转
+        # 标记模块是否旋转
+        self.rotated = False
+        self.rotate_point = 0 # 0: 左下角, 1: 左上角, 2: 右上角, 3: 右下角
+        self.placed = False
         
         # B*-树相关指针
         self.parent = None
         self.left = None
         self.right = None
+        
+    def updateAttr(self, block) -> None:
+        if isinstance(block, Block):
+            self.name = block.name
+            self.width = block.width
+            self.height = block.height
+            self.x = block.x
+            self.y = block.y
+            self.rotated = block.rotated
+            self.rotate_point = block.rotate_point
+            self.placed = block.placed
 
 class Terminal:
     def __init__(self, name, x, y) -> None:
