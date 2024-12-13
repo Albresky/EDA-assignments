@@ -3,7 +3,7 @@ Descripttion: BStarTree impl for units, and simulate annealing method for floorp
 Author: Albresky
 Date: 2024-11-27 22:55:47
 LastEditors: Albresky
-LastEditTime: 2024-12-13 16:11:33
+LastEditTime: 2024-12-13 16:33:54
 '''
 
 import math, random, copy
@@ -278,7 +278,7 @@ class BStarTree:
                 else:
                     self.rotate_block(block)
 
-        if best_block and self.check_valid(best_block):
+        if best_block.name and self.check_valid(best_block):
             # print(f'Find best position for block: {best_block.name}, cost: {min_cost}')
             best_block.placed = True
             block.updateAttr(best_block)
@@ -295,10 +295,8 @@ class BStarTree:
         positions = []
         for other in self.blocks:
             if other.name != block.name and other.placed:
-                if ((other.x + other.width + min(block.width, block.height)) <= self.outline.w) and \
-                    ((other.y + other.height + min(block.width, block.height)) <= self.outline.h):
-                    positions.append((other.x + other.width, other.y))
-                    positions.append((other.x, other.y + other.height))
+                positions.append((other.x + other.width, other.y))
+                positions.append((other.x, other.y + other.height))
         if len(positions) == 0:
             positions.append((0, 0))
         # print(f'Possible positions for block {block.name}: {len(positions)}x')
