@@ -1,10 +1,14 @@
 '''
-Descripttion: Utils like configurations and visualization
-Author: Albresky
+Copyright (c) 2024 by Albresky, All Rights Reserved. 
+
+Author: Albresky albre02@outlook.com
 Date: 2024-11-27 22:56:01
-LastEditors: Albresky
-LastEditTime: 2024-12-13 16:37:42
+LastEditTime: 2024-12-22 19:22:53
+FilePath: /EDA-assignments/lab2/floorplan/src/fp_utils.py
+
+Description: Utils for configurations and visualization
 '''
+
 
 def load_config(filename:str) -> dict:
     import json

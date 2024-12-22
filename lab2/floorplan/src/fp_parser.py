@@ -1,9 +1,12 @@
 '''
-Descripttion: Parsers for units from .block and .net files
-Author: Albresky
+Copyright (c) 2024 by Albresky, All Rights Reserved. 
+
+Author: Albresky albre02@outlook.com
 Date: 2024-11-27 22:55:07
-LastEditors: Albresky
-LastEditTime: 2024-11-28 12:16:02
+LastEditTime: 2024-12-22 19:22:28
+FilePath: /EDA-assignments/lab2/floorplan/src/fp_parser.py
+
+Description: Parsers for units from .block and .net files.
 '''
 
 from fp_units import *

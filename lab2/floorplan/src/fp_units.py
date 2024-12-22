@@ -1,10 +1,14 @@
 '''
-Descripttion: The definition of classes for units in floorplan
-Author: Albresky
+Copyright (c) 2024 by Albresky, All Rights Reserved. 
+
+Author: Albresky albre02@outlook.com
 Date: 2024-11-27 22:55:28
-LastEditors: Albresky
-LastEditTime: 2024-12-13 14:55:00
+LastEditTime: 2024-12-22 19:22:48
+FilePath: /EDA-assignments/lab2/floorplan/src/fp_units.py
+
+Description: The definition of classes for units in floorplan
 '''
+
 
 class Outline:
     def __init__(self, width:int=0, height:int=0) -> None:
