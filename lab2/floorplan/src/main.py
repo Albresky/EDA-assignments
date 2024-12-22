@@ -1,10 +1,14 @@
 '''
-Descripttion: The main function of floorplan
-Author: Albresky
-Date: 2024-11-28 12:03:13
-LastEditors: Albresky
-LastEditTime: 2024-12-13 16:14:11
+Copyright (c) 2024 by Albresky, All Rights Reserved. 
+
+Author: Albresky albre02@outlook.com
+Date: 2024-12-21 20:04:49
+LastEditTime: 2024-12-22 19:20:27
+FilePath: /EDA-assignments/lab2/floorplan/src/main.py
+
+Description: The main function of floorplanner
 '''
+
 import os,sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '.'))
@@ -15,7 +19,7 @@ os.chdir(sys.path[0])
 import time, datetime
 from fp_parser import parse_dotnet, parse_dotblock
 from fp_units import Blocks, Nets, Terminals
-from fp_bstar import BStarTree
+from fp_floorplanner import FloorPlanner
 from fp_utils import load_config, visualize
 
 def main():
@@ -25,10 +29,9 @@ def main():
     outline, blocks, terminals = parse_dotblock(cfg['file']['blocks'])
     nets = parse_dotnet(cfg['file']['nets'], blocks, terminals)
 
-    # 初始化 B*-树
-    floorplanner = BStarTree(outline, blocks, temperature=cfg['sa_params']['temperature'], alpha=cfg['sa_params']['alpha'])
+    # 初始化 FloorPlanner
+    floorplanner = FloorPlanner(outline, blocks, temperature=cfg['sa_params']['temperature'], alpha=cfg['sa_params']['alpha'])
     floorplanner.initialize()
-    # floorplanner.pack()
 
     # 优化
     floorplanner.simulate_annealing(nets, max_iterations=cfg['sa_params']['iterations'])
@@ -36,8 +39,8 @@ def main():
     # 计算最终结果
     cost, area, wirelength, adjacent_long_edges = floorplanner.calculate_cost(nets)
     end_time = time.time()
-    
-    print(f"=============== Fininsh ==================")
+
+    print(f"=============== Finish ==================")
     floorplanner.check_valid_all()
 
     # 输出结果
