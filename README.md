@@ -16,7 +16,7 @@
     - Block-level parallelism in MM with `dataflow` HLS pragma
 
  - Lab2.2: Floorplan Algorithm
-    - ~~*BStar Tree* based~~
+    - ~~BStarTree-based(decrepated)~~
     - *Simulated Annealing* optimization
     - Tools implemented:
         - parser

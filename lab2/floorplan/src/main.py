@@ -3,7 +3,7 @@ Copyright (c) 2024 by Albresky, All Rights Reserved.
 
 Author: Albresky albre02@outlook.com
 Date: 2024-12-21 20:04:49
-LastEditTime: 2024-12-24 19:35:42
+LastEditTime: 2024-12-24 21:41:17
 FilePath: /EDA-assignments/lab2/floorplan/src/main.py
 
 Description: The main function of floorplanner
@@ -52,7 +52,7 @@ def main():
         f.write(f"Width {outline.w}\n")
         f.write(f"Height {outline.h}\n")
         f.write(f"RunTime {end_time - start_time}\n")
-        for block in floorplanner.best_blocks:
+        for block in floorplanner.blocks:
             f.write(f"{block.name} {block.x} {block.y} {block.x + block.width} {block.y + block.height}\n")
     
     # 可视化

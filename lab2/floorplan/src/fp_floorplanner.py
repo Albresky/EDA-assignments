@@ -3,7 +3,7 @@ Copyright (c) 2024 by Albresky, All Rights Reserved.
 
 Author: Albresky albre02@outlook.com
 Date: 2024-12-21 20:22:50
-LastEditTime: 2024-12-24 20:43:56
+LastEditTime: 2024-12-24 21:57:18
 FilePath: /EDA-assignments/lab2/floorplan/src/fp_floorplanner.py
 
 Description: Floorplanner based on B*-tree, featured with and perturbation simulated annealing.
@@ -23,7 +23,7 @@ class FloorPlanner:
         self.bstar_tree = BStarTree(outline, blocks)
         self.temperature = temperature
         self.alpha = alpha
-        self.best_blocks = None
+        self.best_cost = float('inf')
         self.operations = []
         self.avg_wirelen = self.calculate_avg_wirelen()
 
@@ -40,17 +40,12 @@ class FloorPlanner:
             while not block.placed:
                 self.adjust_position(block, max_trials=99, random_pos=False)
 
-            if block.placed:
-                print(f'[init] Block {block.name} placed at ({block.x}, {block.y})')
-            else:
-                print(f'[init] Block {block.name} cannot be placed')
-
             placed_blocks.append(block)
 
         # Set up the B*-tree structure
-        self.bstar_tree.root = placed_blocks[0]
-        for block in placed_blocks[1:]:
-            self.bstar_tree.insert(self.bstar_tree.root, block)
+        # self.bstar_tree.root = placed_blocks[0]
+        # for block in placed_blocks[1:]:
+        #     self.bstar_tree.insert(self.bstar_tree.root, block)
 
     def adjust_position(self, block: Block, max_trials: int = 10, random_pos: bool = False) -> Block:
         best_block = Block()
@@ -138,44 +133,61 @@ class FloorPlanner:
                     return True
         return False
 
-    def simulate_annealing(self, max_iterations: int = 1000) -> None:
-        best_cost, _, _ = self.calculate_cost()
-        self.best_blocks = [block for block in self.blocks]
-
+    def simulate_annealing(self, max_iterations:int = 1000) -> None:
+        recent_costs = []
+        
         for i in range(max_iterations):
-            print(f"SA[{i}] Cost={best_cost}")
-            blk = self.perturb()
-            if self.check_valid_all():
-                self.revert(blk)
-                continue
-            cost, _, _ = self.calculate_cost()
-            delta = cost - best_cost
-            if delta < 0 or random.random() < math.exp(-delta / self.temperature):
-                if cost < best_cost:
-                    best_cost = cost
-                    self.best_blocks = [block for block in self.blocks]
-            else:
-                self.revert()
-            self.temperature *= self.alpha
+            best_cost, _, _ = self.calculate_cost()
+            for blk in self.blocks:
+                self.perturb(blk)
+                if not self.check_valid(blk):
+                    self.revert(blk)
+                    continue
+                cost, _, _ = self.calculate_cost()
+                delta = cost - best_cost
+                if delta < 0 or random.random() < math.exp(-delta / self.temperature):
+                    if cost <= best_cost:
+                        best_cost = cost
+                else:
+                    self.revert(blk)
+                self.temperature *= self.alpha
 
-    def perturb(self) -> Block:
-        action = random.choice(['rotate', 'move'])
-        if action == 'rotate':
-            return self.rotate_block(first_try=True)
-        elif action == 'move':
-            choice = random.randint(0, 3)
+            self.best_cost = best_cost
+                
+            # Update the latest cost
+            recent_costs.append(best_cost)
+            if len(recent_costs) > 10:
+                recent_costs.pop(0)
+
+            # Check convergence
+            if len(recent_costs) == 10 and abs(sum(recent_costs) - recent_costs[0]*10) < 1e-9:
+                print(f"SA has converged at iteration {i} with cost {best_cost}")
+                break
+            print(f"SA[{i}] Cost={best_cost}")
+            
+        print(f'SA finished, {len(self.blocks)}')
+
+    def perturb(self, block:Block) -> Block:
+        magic = random.randint(0, 100)
+        
+        # action == 'rotate'
+        if magic < 10:
+            self.rotate_block(block, first_try=True)
+        # action == 'move'
+        else:
+            choice = random.randint(0, 1)
             if choice == 0:
-                return self.move_block(x=0, y=-1, first_try=True)
+                # down
+                self.move_block(block, x=0, y=-1, first_try=True)
             elif choice == 1:
-                return self.move_block(x=-1, y=0, first_try=True)
-            elif choice == 2:
-                return self.move_block(x=-1, y=-1, first_try=True)
+                # left
+                self.move_block(block, x=-1, y=0, first_try=True)
 
     '''
     Description: Rotate the block for 90 degrees, rotate in the center of the block(x, y)
                  Rotated block positioned at the top or below the block.
     '''
-    def rotate_block(self, block:Block=None, first_try=True) -> Block:
+    def rotate_block(self, block:Block=None, first_try=True) -> None:
         if block is None:
             block = random.choice(self.blocks)
         
@@ -183,16 +195,14 @@ class FloorPlanner:
         block.width, block.height = block.height, block.width
         if first_try:
             self.operations.append(('rotate', block))
-        return block
 
-    def move_block(self, block:Block=None, x: int = 1, y: int = 1, first_try=True) -> Block:
+    def move_block(self, block:Block=None, x: int = 1, y: int = 1, first_try=True) -> None:
         if block is None:
             block = random.choice(self.blocks)
         block.x += x
         block.y += y
         if first_try:
             self.operations.append(('move', block, x, y))
-        return block
     
     def revert(self, block:Block) -> None:
         if not self.operations:
@@ -202,7 +212,7 @@ class FloorPlanner:
         if action[0] == 'rotate':
             self.rotate_block(block, first_try=False)
         elif action[0] == 'move':
-            self.move_block(block, x=0-int(action[1]), y=0-int(action[2]), first_try=False)
+            self.move_block(block, x=0-int(action[2]), y=0-int(action[3]), first_try=False)
 
     '''
     Description: Calculate cost using area, wirelength, and adjacent long edges
@@ -267,11 +277,3 @@ class FloorPlanner:
             total_wl += 0.5 * (bk.width + bk.height)
         return total_wl / len(self.blocks)
             
-
-    def calculate_cost_for_block(self, block) -> int:
-        # 计算单个 block 的成本
-        cost = 0
-        for other in self.blocks:
-            if other.name != block.name:
-                cost += abs(block.x - other.x) + abs(block.y - other.y)
-        return cost
