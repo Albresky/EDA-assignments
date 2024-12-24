@@ -3,7 +3,7 @@ Copyright (c) 2024 by Albresky, All Rights Reserved.
 
 Author: Albresky albre02@outlook.com
 Date: 2024-11-27 22:56:01
-LastEditTime: 2024-12-22 19:22:53
+LastEditTime: 2024-12-24 23:55:16
 FilePath: /EDA-assignments/lab2/floorplan/src/fp_utils.py
 
 Description: Utils for configurations and visualization
@@ -11,6 +11,14 @@ Description: Utils for configurations and visualization
 
 
 def load_config(filename:str) -> dict:
+    """Load the configuration file.
+
+    Args:
+        filename (str): The path of configuration file.
+
+    Returns:
+        dict: The dict of configuration.
+    """
     import json
 
     with open(filename, 'r') as f:

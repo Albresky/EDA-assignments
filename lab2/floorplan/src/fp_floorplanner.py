@@ -3,7 +3,7 @@ Copyright (c) 2024 by Albresky, All Rights Reserved.
 
 Author: Albresky albre02@outlook.com
 Date: 2024-12-21 20:22:50
-LastEditTime: 2024-12-24 21:57:18
+LastEditTime: 2024-12-24 22:22:38
 FilePath: /EDA-assignments/lab2/floorplan/src/fp_floorplanner.py
 
 Description: Floorplanner based on B*-tree, featured with and perturbation simulated annealing.
@@ -11,11 +11,30 @@ Description: Floorplanner based on B*-tree, featured with and perturbation simul
 
 import random
 import math
-from fp_units import Terminal, Terminals, Block, Blocks, Nets
+from fp_units import Outline, Terminal, Terminals, Block, Blocks, Nets
 from fp_bstar import BStarTree
 
 class FloorPlanner:
-    def __init__(self, outline, blocks:Blocks, terminals:Terminals, nets:Nets, temperature: int = 1000, alpha: float = 0.95) -> None:
+    """The floorplanner class is used to place the blocks within the outline and optimize the floorplan using simulated annealing.
+    """
+    def __init__(self, 
+                 outline:Outline, 
+                 blocks:Blocks, 
+                 terminals:Terminals, 
+                 nets:Nets, 
+                 temperature: int = 1000, 
+                 alpha: float = 0.95
+        ) -> None:
+        """The constructor of the floorplanner.
+
+        Args:
+            outline (_type_): The Outline object.
+            blocks (Blocks): The Blocks object.
+            terminals (Terminals): The Terminals object.
+            nets (Nets): The Nets object.
+            temperature (int, optional): Parameter for simulated annealing. Defaults to 1000.
+            alpha (float, optional): Parameter for simulated annealing. Defaults to 0.95.
+        """
         self.outline = outline
         self.blocks = blocks.get_units()
         self.terminals = terminals.get_units()
@@ -28,6 +47,9 @@ class FloorPlanner:
         self.avg_wirelen = self.calculate_avg_wirelen()
 
     def initialize(self) -> None:
+        """Initialize the floorplanner by placing the blocks within the outline,
+        the initialization will find a valid position for each block.
+        """
         # Sort the blocks from large to small based on area(width * height)
         self.blocks.sort(key=lambda block: block.width * block.height, reverse=True)
         placed_blocks = []
@@ -48,6 +70,16 @@ class FloorPlanner:
         #     self.bstar_tree.insert(self.bstar_tree.root, block)
 
     def adjust_position(self, block: Block, max_trials: int = 10, random_pos: bool = False) -> Block:
+        """Adjust the position of the block to find a valid position, adjust method: rotate.
+                
+        Args:
+            block (Block): the block ref to adjust.
+            max_trials (int, optional): Max trials to adjust the position. Defaults to 10.
+            random_pos (bool, optional): Adjust the position randomly. Defaults to False.
+
+        Returns:
+            Block: The adjusted block ref.
+        """
         best_block = Block()
         min_cost = float('inf')
         possible_positions = None
@@ -81,10 +113,15 @@ class FloorPlanner:
             max_trials -= 1
             self.adjust_position(block, max_trials, random_pos=True)
 
-    '''
-    Description: Get all possible positions for a block in the left space
-    '''
     def get_possible_positions(self, block:Block) -> list:
+        """Get all possible positions for a block within left space.
+        
+        Args:
+            block (Block): The block ref to get possible positions.
+
+        Returns:
+            list: A list of possible positions for the given block.
+        """
         positions = []
         for other in self.blocks:
             if other.name != block.name and other.placed:
@@ -92,10 +129,18 @@ class FloorPlanner:
                 positions.append((other.x, other.y + other.height))
         if len(positions) == 0:
             positions.append((0, 0))
-        # print(f'Possible positions for block {block.name}: {len(positions)}x')
         return positions
     
     def get_rdm_pos(self, block: Block) -> tuple:
+        """Get a random position for a block within the outline.
+        
+        Args:
+            block (Block): The block ref to get a random position.
+
+        Returns:
+            tuple: A random coordinate (x, y) to place the block.
+        """
+        
         while True:
             x = random.randint(0, self.outline.w - block.width)
             y = random.randint(0, self.outline.h - block.height)
@@ -107,10 +152,27 @@ class FloorPlanner:
                 else:
                     return (x, y)
 
-    def check_valid(self, block: Block) -> bool:
+    def check_valid(self, 
+                    block: Block
+    ) -> bool:
+        """Check if the block is valid within the outline and does not overlap with other blocks.
+        
+        Args:
+            block (Block): _description_
+
+        Returns:
+            bool: Whether the block is valid.
+        """
+        
         return self.is_block_within_outline(block) and not self.check_overlap(block)
 
     def check_valid_all(self) -> bool:
+        """Check if all blocks are valid within the outline and do not overlap with each other.
+        
+        Returns:
+            bool: Whether all blocks are valid.
+        """
+        
         isvalid = True
         for block in self.blocks:
             if not block.placed:
@@ -121,10 +183,31 @@ class FloorPlanner:
                 isvalid = False
         return isvalid
 
-    def is_block_within_outline(self, block: Block) -> bool:
+    def is_block_within_outline(self, 
+                                block: Block
+        ) -> bool:
+        """Check if the block is within the outline.
+        
+        Args:
+            block (Block): The block ref to check.
+
+        Returns:
+            bool: Whether the block is within the outline.
+        """
+        
         return (block.x >= 0) and (block.y >= 0) and (block.x + block.width <= self.outline.w) and (block.y + block.height <= self.outline.h)
 
-    def check_overlap(self, block) -> bool:
+    def check_overlap(self, 
+                      block
+        ) -> bool:
+        """Check if the block overlaps with other blocks.
+        Args:
+            block (_type_): The block ref to check.
+
+        Returns:
+            bool: Whether the block overlaps with other blocks.
+        """
+        
         for other in self.blocks:
             if other.name != block.name and other.placed:
                 if not (block.x + block.width <= other.x or block.x >= other.x + other.width or
@@ -133,7 +216,15 @@ class FloorPlanner:
                     return True
         return False
 
-    def simulate_annealing(self, max_iterations:int = 1000) -> None:
+    def simulate_annealing(self, 
+                           max_iterations:int = 1000
+        ) -> None:
+        """The main function of simulated annealing, optimize the floorplan by perturbing the blocks.
+
+        Args:
+            max_iterations (int, optional): The max iterations of the simulated annealing. Defaults to 1000.
+        """
+        
         recent_costs = []
         
         for i in range(max_iterations):
@@ -167,7 +258,18 @@ class FloorPlanner:
             
         print(f'SA finished, {len(self.blocks)}')
 
-    def perturb(self, block:Block) -> Block:
+    def perturb(self, 
+                block:Block
+        ) -> Block:
+        """The perturbation function of the simulated annealing, perturb the block by rotating or moving at random.
+
+        Args:
+            block (Block): The block ref to perturb.
+
+        Returns:
+            Block: The perturbed block ref.
+        """
+        
         magic = random.randint(0, 100)
         
         # action == 'rotate'
@@ -187,7 +289,17 @@ class FloorPlanner:
     Description: Rotate the block for 90 degrees, rotate in the center of the block(x, y)
                  Rotated block positioned at the top or below the block.
     '''
-    def rotate_block(self, block:Block=None, first_try=True) -> None:
+    def rotate_block(self, 
+                     block:Block=None, 
+                     first_try=True
+        ) -> None:
+        """Rotate the block for 90 degrees, rotate in the center of the block(x, y).
+
+        Args:
+            block (Block, optional): The block ref to rotate. Defaults to None.
+            first_try (bool, optional): Whether it is the first try to rotate the block. Defaults to True.
+        """
+        
         if block is None:
             block = random.choice(self.blocks)
         
@@ -196,7 +308,20 @@ class FloorPlanner:
         if first_try:
             self.operations.append(('rotate', block))
 
-    def move_block(self, block:Block=None, x: int = 1, y: int = 1, first_try=True) -> None:
+    def move_block(self, 
+                   block:Block=None, 
+                   x: int = 1, 
+                   y: int = 1, 
+                   first_try=True
+        ) -> None:
+        """The move function of the simulated annealing, move the block by step x, y.
+
+        Args:
+            block (Block, optional): The block ref to move. Defaults to None.
+            x (int, optional): The x step to move. Defaults to 1.
+            y (int, optional): The y step to move. Defaults to 1.
+            first_try (bool, optional): Whether it is the first try to move the block. Defaults to True.
+        """
         if block is None:
             block = random.choice(self.blocks)
         block.x += x
@@ -204,7 +329,15 @@ class FloorPlanner:
         if first_try:
             self.operations.append(('move', block, x, y))
     
-    def revert(self, block:Block) -> None:
+    def revert(self, 
+               block:Block
+        ) -> None:
+        """The revert function of the simulated annealing, revert the last operation from rotate or move.
+
+        Args:
+            block (Block): The block ref to revert.
+        """
+        
         if not self.operations:
             return
         action = self.operations.pop()
@@ -218,12 +351,23 @@ class FloorPlanner:
     Description: Calculate cost using area, wirelength, and adjacent long edges
     '''
     def calculate_cost(self) -> tuple:
+        """The cost function of the simulated annealing, calculate the cost of the floorplan. The cost is calculated by the area and wirelength. The wirelength is calculated by half-perimeter wirelength.
+
+        Returns:
+            tuple: The cost, area, and wirelength of current floorplan.
+        """
+        
         area, area_norm = self.calculate_area()
         wire_len = self.calculate_wirelength()
         cost = self.alpha * area/area_norm + (1 - self.alpha) * wire_len / self.avg_wirelen
         return cost, area, wire_len
 
     def calculate_area(self) -> int:
+        """Calculate the area of the floorplan.
+
+        Returns:
+            int: The area of the floorplan.
+        """
         area, area_norm = 0, 0
         max_x, max_y = 0, 0
         
@@ -239,6 +383,11 @@ class FloorPlanner:
         return area, area_norm
     
     def calculate_wirelength(self) -> int:
+        """Calculate the wirelength of the floorplan.
+
+        Returns:
+            int: The wirelength of the floorplan.
+        """
         total_wirelength = 0
 
         for net in self.nets:
@@ -271,9 +420,14 @@ class FloorPlanner:
 
         return total_wirelength
 
-    def calculate_avg_wirelen(self):
+    def calculate_avg_wirelen(self) -> int:
+        """Calculate the average wirelength of the floorplan.
+
+        Returns:
+            int: The average wirelength of the floorplan.
+        """
         total_wl = 0
         for bk in self.blocks:
             total_wl += 0.5 * (bk.width + bk.height)
-        return total_wl / len(self.blocks)
+        return int(total_wl / len(self.blocks))
             

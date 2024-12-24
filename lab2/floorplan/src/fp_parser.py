@@ -3,7 +3,7 @@ Copyright (c) 2024 by Albresky, All Rights Reserved.
 
 Author: Albresky albre02@outlook.com
 Date: 2024-11-27 22:55:07
-LastEditTime: 2024-12-22 19:22:28
+LastEditTime: 2024-12-24 23:56:17
 FilePath: /EDA-assignments/lab2/floorplan/src/fp_parser.py
 
 Description: Parsers for units from .block and .net files.
@@ -12,7 +12,16 @@ Description: Parsers for units from .block and .net files.
 from fp_units import *
 
 
-def parse_dotblock(filename) -> tuple:
+def parse_dotblock(filename:str) -> tuple:  
+    """Parse the .block file and return the outline, blocks, and terminals.
+
+    Args:
+        filename (str): The path to the .block file.
+
+    Returns:
+        tuple: A tuple containing the outline, blocks, and terminals objects.
+    """
+    
     blocks = Blocks()
     terminals = Terminals()
     outline = Outline()
@@ -65,7 +74,21 @@ def parse_dotblock(filename) -> tuple:
         index += 1
     return outline, blocks, terminals
 
-def parse_dotnet(filename:str, blocks:Blocks, terminals:Terminals) -> Nets:
+def parse_dotnet(filename:str, 
+                 blocks:Blocks, 
+                 terminals:Terminals
+    ) -> Nets:
+    """Parse the .net file and return the nets.
+
+    Args:
+        filename (str): The path to the .net file.
+        blocks (Blocks): The parsed blocks (Blocks) object.
+        terminals (Terminals): The parsed terminals (Terminals) object.
+
+    Returns:
+        Nets: The parsed nets (Nets) object.
+    """
+    
     nets = Nets()
     block_dict = {block.name: block for block in blocks.get_units()}
     terminal_dict = {terminal.name: terminal for terminal in terminals.get_units()}

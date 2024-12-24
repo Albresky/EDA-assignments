@@ -13,6 +13,8 @@ import math, random, copy
 from fp_units import Outline, Block, Nets, Blocks
 
 class BStarTree:
+    """Not used.
+    """
     def __init__(self, outline: Outline, blocks: Blocks) -> None:
         self.outline = outline
         self.blocks = blocks.get_units()
