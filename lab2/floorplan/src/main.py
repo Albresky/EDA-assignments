@@ -3,7 +3,7 @@ Copyright (c) 2024 by Albresky, All Rights Reserved.
 
 Author: Albresky albre02@outlook.com
 Date: 2024-12-21 20:04:49
-LastEditTime: 2024-12-22 19:20:27
+LastEditTime: 2024-12-24 19:35:42
 FilePath: /EDA-assignments/lab2/floorplan/src/main.py
 
 Description: The main function of floorplanner
@@ -30,14 +30,14 @@ def main():
     nets = parse_dotnet(cfg['file']['nets'], blocks, terminals)
 
     # 初始化 FloorPlanner
-    floorplanner = FloorPlanner(outline, blocks, temperature=cfg['sa_params']['temperature'], alpha=cfg['sa_params']['alpha'])
+    floorplanner = FloorPlanner(outline, blocks, terminals, nets, temperature=cfg['sa_params']['temperature'], alpha=cfg['sa_params']['alpha'])
     floorplanner.initialize()
 
     # 优化
-    floorplanner.simulate_annealing(nets, max_iterations=cfg['sa_params']['iterations'])
+    floorplanner.simulate_annealing(max_iterations=cfg['sa_params']['iterations'])
 
     # 计算最终结果
-    cost, area, wirelength, adjacent_long_edges = floorplanner.calculate_cost(nets)
+    cost, area, wirelength = floorplanner.calculate_cost()
     end_time = time.time()
 
     print(f"=============== Finish ==================")

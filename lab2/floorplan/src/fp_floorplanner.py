@@ -3,7 +3,7 @@ Copyright (c) 2024 by Albresky, All Rights Reserved.
 
 Author: Albresky albre02@outlook.com
 Date: 2024-12-21 20:22:50
-LastEditTime: 2024-12-22 19:19:38
+LastEditTime: 2024-12-24 20:43:56
 FilePath: /EDA-assignments/lab2/floorplan/src/fp_floorplanner.py
 
 Description: Floorplanner based on B*-tree, featured with and perturbation simulated annealing.
@@ -11,21 +11,24 @@ Description: Floorplanner based on B*-tree, featured with and perturbation simul
 
 import random
 import math
-from fp_units import Block, Nets
+from fp_units import Terminal, Terminals, Block, Blocks, Nets
 from fp_bstar import BStarTree
 
 class FloorPlanner:
-    def __init__(self, outline, blocks, temperature: int = 1000, alpha: float = 0.95) -> None:
+    def __init__(self, outline, blocks:Blocks, terminals:Terminals, nets:Nets, temperature: int = 1000, alpha: float = 0.95) -> None:
         self.outline = outline
         self.blocks = blocks.get_units()
+        self.terminals = terminals.get_units()
+        self.nets = nets.get_units()
         self.bstar_tree = BStarTree(outline, blocks)
         self.temperature = temperature
         self.alpha = alpha
         self.best_blocks = None
         self.operations = []
+        self.avg_wirelen = self.calculate_avg_wirelen()
 
     def initialize(self) -> None:
-        # Sort the blocks from large to small based on area (width * height)
+        # Sort the blocks from large to small based on area(width * height)
         self.blocks.sort(key=lambda block: block.width * block.height, reverse=True)
         placed_blocks = []
 
@@ -62,19 +65,19 @@ class FloorPlanner:
         for pos in possible_positions:
             block.x, block.y = pos
             if self.check_valid(block):
-                cost = self.calculate_cost_for_block(block)
-                if cost < min_cost:
+                cost, _, _ = self.calculate_cost()
+                if cost <= min_cost:
                     min_cost = cost
                     best_block.updateAttr(block)
             else:
                 self.rotate_block(block)
                 if self.check_valid(block):
-                    cost = self.calculate_cost_for_block(block)
-                    if cost < min_cost:
+                    cost, _, _ = self.calculate_cost()
+                    if cost <= min_cost:
                         min_cost = cost
                         best_block.updateAttr(block)
                 else:
-                    self.rotate_block(block)
+                    self.revert(block)
 
         if best_block.name and self.check_valid(best_block):
             best_block.placed = True
@@ -112,6 +115,17 @@ class FloorPlanner:
     def check_valid(self, block: Block) -> bool:
         return self.is_block_within_outline(block) and not self.check_overlap(block)
 
+    def check_valid_all(self) -> bool:
+        isvalid = True
+        for block in self.blocks:
+            if not block.placed:
+                print(f'Block {block.name} is not placed')
+                return False
+            if not self.check_valid(block):
+                print(f'Block {block.name} is invalid @({block.x}, {block.y})')
+                isvalid = False
+        return isvalid
+
     def is_block_within_outline(self, block: Block) -> bool:
         return (block.x >= 0) and (block.y >= 0) and (block.x + block.width <= self.outline.w) and (block.y + block.height <= self.outline.h)
 
@@ -120,19 +134,21 @@ class FloorPlanner:
             if other.name != block.name and other.placed:
                 if not (block.x + block.width <= other.x or block.x >= other.x + other.width or
                         block.y + block.height <= other.y or block.y >= other.y + other.height):
+                    # print(f'Overlap between {block.name}@(x={block.x}, y={block.y}) and {other.name}@(x={other.x}, y={other.y})')
                     return True
         return False
 
-    def simulate_annealing(self, nets: Nets, max_iterations: int = 1000) -> None:
-        best_cost, _, _, _ = self.calculate_cost(nets)
+    def simulate_annealing(self, max_iterations: int = 1000) -> None:
+        best_cost, _, _ = self.calculate_cost()
         self.best_blocks = [block for block in self.blocks]
 
         for i in range(max_iterations):
-            self.perturb()
+            print(f"SA[{i}] Cost={best_cost}")
+            blk = self.perturb()
             if self.check_valid_all():
-                self.revert()
+                self.revert(blk)
                 continue
-            cost, _, _, _ = self.calculate_cost(nets)
+            cost, _, _ = self.calculate_cost()
             delta = cost - best_cost
             if delta < 0 or random.random() < math.exp(-delta / self.temperature):
                 if cost < best_cost:
@@ -142,44 +158,115 @@ class FloorPlanner:
                 self.revert()
             self.temperature *= self.alpha
 
-    def perturb(self) -> None:
+    def perturb(self) -> Block:
         action = random.choice(['rotate', 'move'])
         if action == 'rotate':
-            self.rotate_block()
+            return self.rotate_block(first_try=True)
         elif action == 'move':
-            self.move_block(x=1, y=1)
+            choice = random.randint(0, 3)
+            if choice == 0:
+                return self.move_block(x=0, y=-1, first_try=True)
+            elif choice == 1:
+                return self.move_block(x=-1, y=0, first_try=True)
+            elif choice == 2:
+                return self.move_block(x=-1, y=-1, first_try=True)
 
     '''
     Description: Rotate the block for 90 degrees, rotate in the center of the block(x, y)
                  Rotated block positioned at the top or below the block.
     '''
-    def rotate_block(self, block:Block=None) -> None:
+    def rotate_block(self, block:Block=None, first_try=True) -> Block:
         if block is None:
             block = random.choice(self.blocks)
         
-        block.rotated = not block.rotated
+        block.rotated = True
         block.width, block.height = block.height, block.width
-        self.operations.append(('rotate', block))
-        return None    
+        if first_try:
+            self.operations.append(('rotate', block))
+        return block
 
-    def revert(self) -> None:
+    def move_block(self, block:Block=None, x: int = 1, y: int = 1, first_try=True) -> Block:
+        if block is None:
+            block = random.choice(self.blocks)
+        block.x += x
+        block.y += y
+        if first_try:
+            self.operations.append(('move', block, x, y))
+        return block
+    
+    def revert(self, block:Block) -> None:
         if not self.operations:
             return
         action = self.operations.pop()
         # Revert the last operation (swap, move, or rotate)
+        if action[0] == 'rotate':
+            self.rotate_block(block, first_try=False)
+        elif action[0] == 'move':
+            self.move_block(block, x=0-int(action[1]), y=0-int(action[2]), first_try=False)
 
-    def calculate_cost(self, nets: Nets, alpha=0.5, beta=0.5) -> tuple:
-        # Calculate cost using area, wirelength, and adjacent long edges
-        area, wirelength, adjacent_long_edges = self.calculate_area_wirelength_and_adjacent_edges(nets)
-        cost = alpha * area + (1 - alpha) * wirelength - beta * adjacent_long_edges
-        return cost, area, wirelength, adjacent_long_edges
+    '''
+    Description: Calculate cost using area, wirelength, and adjacent long edges
+    '''
+    def calculate_cost(self) -> tuple:
+        area, area_norm = self.calculate_area()
+        wire_len = self.calculate_wirelength()
+        cost = self.alpha * area/area_norm + (1 - self.alpha) * wire_len / self.avg_wirelen
+        return cost, area, wire_len
 
-    def calculate_area_wirelength_and_adjacent_edges(self, nets: Nets) -> tuple:
-        # Calculate area, wirelength, and adjacent long edges here
-        area = 0
-        wirelength = 0
-        adjacent_long_edges = 0
-        return area, wirelength, adjacent_long_edges
+    def calculate_area(self) -> int:
+        area, area_norm = 0, 0
+        max_x, max_y = 0, 0
+        
+        for block in self.blocks:
+            area_norm += block.width * block.height
+            
+        for block in self.blocks:
+            if block.x + block.width > max_x:
+                max_x = block.x + block.width
+            if block.y + block.height > max_y:
+                max_y = block.y + block.height
+        area = max_x * max_y
+        return area, area_norm
+    
+    def calculate_wirelength(self) -> int:
+        total_wirelength = 0
+
+        for net in self.nets:
+            min_x = float('inf')
+            min_y = float('inf')
+            max_x = float('-inf')
+            max_y = float('-inf')
+
+            for _node in net.get_nodes():
+                if isinstance(_node, Block):
+                    x1 = _node.x
+                    y1 = _node.y
+                    x2 = _node.x + _node.width
+                    y2 = _node.y + _node.height
+                elif isinstance(_node, Terminal):
+                    x1 = _node.x
+                    y1 = _node.y
+                    x2 = _node.x
+                    y2 = _node.y
+                else:
+                    continue
+
+                min_x = min(min_x, x1)
+                min_y = min(min_y, y1)
+                max_x = max(max_x, x2)
+                max_y = max(max_y, y2)
+
+            hpwl = (max_x - min_x) + (max_y - min_y)
+            total_wirelength += hpwl
+
+        return total_wirelength
+
+    def calculate_avg_wirelen(self):
+        total_wl = 0
+        for bk in self.blocks:
+            total_wl += 0.5 * (bk.width + bk.height)
+        return total_wl / len(self.blocks)
+            
 
     def calculate_cost_for_block(self, block) -> int:
         # 计算单个 block 的成本
@@ -188,10 +275,3 @@ class FloorPlanner:
             if other.name != block.name:
                 cost += abs(block.x - other.x) + abs(block.y - other.y)
         return cost
-
-    def check_valid_all(self) -> bool:
-        for block in self.blocks:
-            if not block.placed:
-                print(f'Block {block.name} is not placed')
-            if not self.check_valid(block):
-                print(f'Block {block.name} is invalid @({block.x}, {block.y})')
