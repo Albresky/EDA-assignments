@@ -37,7 +37,7 @@ def main():
     floorplanner.simulate_annealing(max_iterations=cfg['sa_params']['iterations'])
 
     # 计算最终结果
-    cost, area, wirelength = floorplanner.calculate_cost()
+    cost, _, _, area, wirelength = floorplanner.calculate_cost()
     end_time = time.time()
 
     print(f"=============== Finish ==================")
@@ -49,8 +49,8 @@ def main():
         f.write(f"Cost {cost}\n")
         f.write(f"Wirelength {wirelength}\n")
         f.write(f"Area {area}\n")
-        f.write(f"Width {outline.w}\n")
-        f.write(f"Height {outline.h}\n")
+        f.write(f"Width {floorplanner.best_x}\n")
+        f.write(f"Height {floorplanner.best_y}\n")
         f.write(f"RunTime {end_time - start_time}\n")
         for block in floorplanner.blocks:
             f.write(f"{block.name} {block.x} {block.y} {block.x + block.width} {block.y + block.height}\n")

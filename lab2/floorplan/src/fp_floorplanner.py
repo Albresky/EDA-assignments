@@ -43,6 +43,8 @@ class FloorPlanner:
         self.temperature = temperature
         self.alpha = alpha
         self.best_cost = float('inf')
+        self.best_x = float('inf')
+        self.best_y = float('inf')
         self.operations = []
         self.avg_wirelen = self.calculate_avg_wirelen()
 
@@ -92,14 +94,14 @@ class FloorPlanner:
         for pos in possible_positions:
             block.x, block.y = pos
             if self.check_valid(block):
-                cost, _, _ = self.calculate_cost()
+                cost, _, _, _, _= self.calculate_cost()
                 if cost <= min_cost:
                     min_cost = cost
                     best_block.updateAttr(block)
             else:
                 self.rotate_block(block)
                 if self.check_valid(block):
-                    cost, _, _ = self.calculate_cost()
+                    cost, _, _, _, _ = self.calculate_cost()
                     if cost <= min_cost:
                         min_cost = cost
                         best_block.updateAttr(block)
@@ -228,15 +230,15 @@ class FloorPlanner:
         recent_costs = []
         
         for i in range(max_iterations):
-            best_cost, _, _ = self.calculate_cost()
+            best_cost, max_x, max_y, _, _ = self.calculate_cost()
             for blk in self.blocks:
                 self.perturb(blk)
                 if not self.check_valid(blk):
                     self.revert(blk)
                     continue
-                cost, _, _ = self.calculate_cost()
+                cost, _, _, _, _ = self.calculate_cost()
                 delta = cost - best_cost
-                if delta < 0 or random.random() < math.exp(-delta / self.temperature):
+                if delta < 0 or self.temperature == 0 or random.random() < math.exp(-delta / self.temperature):
                     if cost <= best_cost:
                         best_cost = cost
                 else:
@@ -244,6 +246,7 @@ class FloorPlanner:
                 self.temperature *= self.alpha
 
             self.best_cost = best_cost
+            self.best_x, self.best_y = max_x, max_y
                 
             # Update the latest cost
             recent_costs.append(best_cost)
@@ -357,10 +360,11 @@ class FloorPlanner:
             tuple: The cost, area, and wirelength of current floorplan.
         """
         
-        area, area_norm = self.calculate_area()
+        max_x, max_y, area, area_norm = self.calculate_area()
         wire_len = self.calculate_wirelength()
         cost = self.alpha * area/area_norm + (1 - self.alpha) * wire_len / self.avg_wirelen
-        return cost, area, wire_len
+        # print(f"area:{area}, anom:{area_norm}, wire:{wire_len}, wirenorm:{self.avg_wirelen}")
+        return cost, max_x, max_y, area, wire_len
 
     def calculate_area(self) -> int:
         """Calculate the area of the floorplan.
@@ -380,7 +384,7 @@ class FloorPlanner:
             if block.y + block.height > max_y:
                 max_y = block.y + block.height
         area = max_x * max_y
-        return area, area_norm
+        return max_x, max_y, area, area_norm
     
     def calculate_wirelength(self) -> int:
         """Calculate the wirelength of the floorplan.
@@ -429,5 +433,5 @@ class FloorPlanner:
         total_wl = 0
         for bk in self.blocks:
             total_wl += 0.5 * (bk.width + bk.height)
-        return int(total_wl / len(self.blocks))
+        return int(total_wl)
             
